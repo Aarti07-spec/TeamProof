@@ -1,0 +1,1125 @@
+<div class="app-layout">
+  <!-- Left Dark Navy Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">TP</div>
+      <div class="brand-text">
+        <span class="brand-title">TeamProof</span>
+        <span class="brand-subtitle">Contribution Tracker</span>
+      </div>
+    </div>
+
+    <nav class="nav-menu">
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'dashboard'" 
+        (click)="setActiveTab('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'users'" 
+        (click)="setActiveTab('users')">
+        <span class="nav-icon">👤</span>
+        <span>Users</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'teams'" 
+        (click)="setActiveTab('teams')">
+        <span class="nav-icon">👥</span>
+        <span>Teams</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'projects'" 
+        (click)="setActiveTab('projects')">
+        <span class="nav-icon">📁</span>
+        <span>Projects</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'tasks'" 
+        (click)="setActiveTab('tasks')">
+        <span class="nav-icon">📋</span>
+        <span>Tasks</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'submissions'" 
+        (click)="setActiveTab('submissions')">
+        <span class="nav-icon">📤</span>
+        <span>Submissions</span>
+      </button>
+
+      <button 
+        type="button"
+        class="nav-item" 
+        [class.active]="activeTab === 'contributions'" 
+        (click)="setActiveTab('contributions')">
+        <span class="nav-icon">📈</span>
+        <span>Contributions</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="avatar">TP</div>
+        <div class="user-info">
+          <span class="user-name">College Demo</span>
+          <span class="user-role">Student / Evaluator</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <h1 class="page-title">
+          <span *ngIf="activeTab === 'dashboard'">Dashboard Overview</span>
+          <span *ngIf="activeTab === 'users'">Team Members & Students</span>
+          <span *ngIf="activeTab === 'teams'">Student Teams Management</span>
+          <span *ngIf="activeTab === 'projects'">Group Projects</span>
+          <span *ngIf="activeTab === 'tasks'">Task Deliverables & Assignment</span>
+          <span *ngIf="activeTab === 'submissions'">Task Evidence & Submissions</span>
+          <span *ngIf="activeTab === 'contributions'">Transparent Contribution Activity</span>
+        </h1>
+        <p class="page-subtitle">Explainable, transparent tracking for academic group projects</p>
+      </div>
+
+      <div class="header-actions">
+        <span class="backend-status">
+          <span class="status-dot"></span> API: localhost:8080
+        </span>
+        <button class="btn btn-secondary" (click)="loadAll()">
+          🔄 Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- Success Notification Banner -->
+    <div *ngIf="successMessage" class="alert-banner alert-success">
+      <div class="alert-content">
+        <span class="alert-icon">✅</span>
+        <div><strong>Success:</strong> {{ successMessage }}</div>
+      </div>
+      <button class="btn-close" (click)="successMessage = null">✕</button>
+    </div>
+
+    <!-- Error Notification Banner -->
+    <div *ngIf="errorMessage" class="alert-banner alert-error">
+      <div class="alert-content">
+        <span class="alert-icon">⚠️</span>
+        <div><strong>Notice:</strong> {{ errorMessage }}</div>
+      </div>
+      <button class="btn-close" (click)="errorMessage = null">✕</button>
+    </div>
+
+    <!-- 4 Summary Metric Cards (Visible on Dashboard) -->
+    <section *ngIf="activeTab === 'dashboard'" class="metrics-grid">
+      <div class="metric-card card-purple">
+        <div class="metric-header">
+          <span class="metric-label">Total Projects</span>
+          <span class="metric-icon">📁</span>
+        </div>
+        <div class="metric-value">{{ totalProjectsCount }}</div>
+        <div class="metric-footer">Across {{ teams.length }} teams</div>
+      </div>
+
+      <div class="metric-card card-blue">
+        <div class="metric-header">
+          <span class="metric-label">Total Tasks</span>
+          <span class="metric-icon">📋</span>
+        </div>
+        <div class="metric-value">{{ totalTasks }}</div>
+        <div class="metric-footer">{{ users.length }} registered members</div>
+      </div>
+
+      <div class="metric-card card-green">
+        <div class="metric-header">
+          <span class="metric-label">Completed Tasks</span>
+          <span class="metric-icon">✅</span>
+        </div>
+        <div class="metric-value">{{ completedTasks }}</div>
+        <div class="metric-footer">Verified deliverables</div>
+      </div>
+
+      <div class="metric-card card-orange">
+        <div class="metric-header">
+          <span class="metric-label">Pending Reviews</span>
+          <span class="metric-icon">⏳</span>
+        </div>
+        <div class="metric-value">{{ pendingReviews }}</div>
+        <div class="metric-footer">{{ totalSubmissionsCount }} total submissions</div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: DASHBOARD VIEW                                    -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'dashboard'">
+      <!-- Quick Actions Bar -->
+      <div class="quick-actions-bar">
+        <span class="quick-actions-label">Quick Actions:</span>
+        <button class="btn btn-secondary" (click)="setActiveTab('users')">
+          👤 Manage Users
+        </button>
+        <button class="btn btn-secondary" (click)="setActiveTab('teams')">
+          👥 Manage Teams
+        </button>
+        <button class="btn btn-secondary" (click)="setActiveTab('projects')">
+          📁 Manage Projects
+        </button>
+        <button class="btn btn-primary" (click)="setActiveTab('tasks'); showTaskForm = true;">
+          ➕ Create Task
+        </button>
+        <button class="btn btn-secondary" (click)="setActiveTab('submissions'); showSubmissionForm = true;">
+          📤 Submit Evidence
+        </button>
+        <button class="btn btn-secondary" (click)="setActiveTab('contributions')">
+          📈 View Activity
+        </button>
+      </div>
+
+      <!-- Ethical Indicator Card -->
+      <div class="disclaimer-card">
+        <span class="disclaimer-icon">💡</span>
+        <p>
+          <strong>Explainable Activity Principle:</strong> Task delivery and submission evidence are tracked as 
+          observable activity indicators, preventing unfair or opaque grading.
+        </p>
+      </div>
+
+      <!-- Recent Tasks Table Container -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Recent Tasks</h2>
+            <p class="section-subtitle">Real-time deliverables from database</p>
+          </div>
+          <button class="btn btn-primary" (click)="setActiveTab('tasks'); showTaskForm = true;">
+            ➕ Add Task
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loadingTasks" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading tasks from backend...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loadingTasks && tasks.length === 0" class="state-container empty-state">
+          <div class="empty-icon">📋</div>
+          <h3 class="empty-title">No tasks found yet</h3>
+          <p class="empty-description">
+            Get started by creating a <strong>Team</strong>, adding a <strong>Project</strong>, and assigning <strong>Tasks</strong>!
+          </p>
+          <div class="empty-actions">
+            <button class="btn btn-primary" (click)="setActiveTab('teams')">Step 1: Create Team</button>
+          </div>
+        </div>
+
+        <!-- Tasks Data Table -->
+        <div *ngIf="tasks.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Task Title & Description</th>
+                <th>Project</th>
+                <th>Assigned To</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Est. Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of tasks">
+                <td class="col-id">#{{ task.id }}</td>
+                <td class="col-title">
+                  <div class="task-title">{{ task.title }}</div>
+                  <div *ngIf="task.description" class="task-desc">{{ task.description }}</div>
+                </td>
+                <td>
+                  <span class="tag-pill">{{ getProjectName(task.projectId) }}</span>
+                </td>
+                <td>
+                  <span *ngIf="task.assignedTo" class="user-tag">{{ getUserDisplayName(task.assignedTo) }}</span>
+                  <span *ngIf="!task.assignedTo" class="unassigned-tag">Unassigned</span>
+                </td>
+                <td>
+                  <span class="priority-badge" [ngClass]="getPriorityClass(task.priority)">
+                    {{ task.priority }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(task.status)">
+                    {{ task.status }}
+                  </span>
+                </td>
+                <td class="col-hours">{{ task.estimatedHours }} hrs</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB: USERS VIEW                                          -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'users'">
+      <!-- Register User Form Card -->
+      <section class="section-container form-card">
+        <h2 class="section-title">Register Team Member / Student</h2>
+        <p class="section-subtitle">Add users who will be assigned to deliverables and submit evidence</p>
+
+        <form (ngSubmit)="onCreateUser()" class="app-form">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label" for="userName">Full Name *</label>
+              <input 
+                id="userName" 
+                type="text" 
+                class="form-input" 
+                [(ngModel)]="newUser.fullName" 
+                name="userName" 
+                placeholder="e.g. Alex Johnson" 
+                required />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="form-label" for="userEmail">Email Address *</label>
+              <input 
+                id="userEmail" 
+                type="email" 
+                class="form-input" 
+                [(ngModel)]="newUser.email" 
+                name="userEmail" 
+                placeholder="e.g. alex@university.edu" 
+                required />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="form-label" for="userRole">Role *</label>
+              <select 
+                id="userRole" 
+                class="form-select" 
+                [(ngModel)]="newUser.role" 
+                name="userRole">
+                <option value="STUDENT">Student (Member)</option>
+                <option value="TEAM_LEADER">Team Leader</option>
+                <option value="ADMIN">Admin / Faculty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submittingUser">
+              <span *ngIf="submittingUser">Registering...</span>
+              <span *ngIf="!submittingUser">➕ Register Member</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Users Table -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Registered Members</h2>
+            <p class="section-subtitle">Loaded dynamically from <code>/api/users</code></p>
+          </div>
+          <button class="btn btn-secondary" (click)="loadUsers()">Refresh Users</button>
+        </div>
+
+        <div *ngIf="loadingUsers" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading team members...</p>
+        </div>
+
+        <div *ngIf="!loadingUsers && users.length === 0" class="state-container empty-state">
+          <div class="empty-icon">👤</div>
+          <h3 class="empty-title">No users registered yet</h3>
+          <p class="empty-description">Use the form above to add students and team members.</p>
+        </div>
+
+        <div *ngIf="!loadingUsers && users.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Registered Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of users">
+                <td class="col-id">#{{ u.id }}</td>
+                <td class="task-title">{{ u.fullName }}</td>
+                <td class="task-desc">{{ u.email }}</td>
+                <td>
+                  <span class="role-badge" [ngClass]="getUserRoleBadgeClass(u.role)">
+                    {{ u.role }}
+                  </span>
+                </td>
+                <td>{{ u.createdAt ? (u.createdAt | date:'mediumDate') : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: TEAMS VIEW                                        -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'teams'">
+      <!-- Create Team Form Card -->
+      <section class="section-container form-card">
+        <h2 class="section-title">Create New Team</h2>
+        <p class="section-subtitle">Define a student team or project group</p>
+
+        <form (ngSubmit)="onCreateTeam()" class="app-form">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label" for="teamName">Team Name *</label>
+              <input 
+                id="teamName" 
+                type="text" 
+                class="form-input" 
+                [(ngModel)]="newTeam.name" 
+                name="teamName" 
+                placeholder="e.g. Alpha Innovators" 
+                required />
+            </div>
+
+            <div class="form-group flex-2">
+              <label class="form-label" for="teamDesc">Description</label>
+              <input 
+                id="teamDesc" 
+                type="text" 
+                class="form-input" 
+                [(ngModel)]="newTeam.description" 
+                name="teamDesc" 
+                placeholder="e.g. Final Year CS Capstone Group" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submittingTeam">
+              <span *ngIf="submittingTeam">Saving...</span>
+              <span *ngIf="!submittingTeam">➕ Save Team</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Teams Table -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Existing Teams</h2>
+            <p class="section-subtitle">Loaded dynamically from <code>/api/teams</code></p>
+          </div>
+          <button class="btn btn-secondary" (click)="loadTeams()">Refresh</button>
+        </div>
+
+        <div *ngIf="loadingTeams" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading teams...</p>
+        </div>
+
+        <div *ngIf="!loadingTeams && teams.length === 0" class="state-container empty-state">
+          <div class="empty-icon">👥</div>
+          <h3 class="empty-title">No teams created yet</h3>
+          <p class="empty-description">Use the form above to create your first group team.</p>
+        </div>
+
+        <div *ngIf="!loadingTeams && teams.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Team ID</th>
+                <th>Team Name</th>
+                <th>Description</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let team of teams">
+                <td class="col-id">#{{ team.id }}</td>
+                <td class="task-title">{{ team.name }}</td>
+                <td class="task-desc">{{ team.description || '—' }}</td>
+                <td>{{ team.createdAt | date:'mediumDate' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: PROJECTS VIEW                                     -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'projects'">
+      <!-- Create Project Form Card -->
+      <section class="section-container form-card">
+        <h2 class="section-title">Create New Project</h2>
+        <p class="section-subtitle">Link a project deliverable to an existing team</p>
+
+        <div *ngIf="teams.length === 0" class="alert-inline alert-info">
+          ℹ️ No teams found. Please <a href="javascript:void(0)" (click)="setActiveTab('teams')">create a Team</a> before creating a project.
+        </div>
+
+        <form (ngSubmit)="onCreateProject()" class="app-form" *ngIf="teams.length > 0">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label" for="projTeam">Select Team *</label>
+              <select 
+                id="projTeam" 
+                class="form-select" 
+                [(ngModel)]="newProject.teamId" 
+                name="projTeam" 
+                required>
+                <option [ngValue]="null" disabled>-- Choose a Team --</option>
+                <option *ngFor="let team of teams" [ngValue]="team.id">
+                  #{{ team.id }} - {{ team.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group flex-2">
+              <label class="form-label" for="projName">Project Name *</label>
+              <input 
+                id="projName" 
+                type="text" 
+                class="form-input" 
+                [(ngModel)]="newProject.name" 
+                name="projName" 
+                placeholder="e.g. Smart Campus IoT Portal" 
+                required />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="form-label" for="projStatus">Status</label>
+              <select id="projStatus" class="form-select" [(ngModel)]="newProject.status" name="projStatus">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="PLANNING">PLANNING</option>
+                <option value="COMPLETED">COMPLETED</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="projDesc">Description</label>
+            <textarea 
+              id="projDesc" 
+              class="form-textarea" 
+              rows="2" 
+              [(ngModel)]="newProject.description" 
+              name="projDesc" 
+              placeholder="Brief description of project scope and objectives..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submittingProject">
+              <span *ngIf="submittingProject">Saving...</span>
+              <span *ngIf="!submittingProject">➕ Save Project</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Projects Table -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Existing Projects</h2>
+            <p class="section-subtitle">Loaded dynamically from <code>/api/projects</code></p>
+          </div>
+          <button class="btn btn-secondary" (click)="loadProjects()">Refresh</button>
+        </div>
+
+        <div *ngIf="loadingProjects" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading projects...</p>
+        </div>
+
+        <div *ngIf="!loadingProjects && projects.length === 0" class="state-container empty-state">
+          <div class="empty-icon">📁</div>
+          <h3 class="empty-title">No projects created yet</h3>
+          <p class="empty-description">Use the form above to create your first project under a team.</p>
+        </div>
+
+        <div *ngIf="!loadingProjects && projects.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Project ID</th>
+                <th>Project Name</th>
+                <th>Parent Team</th>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let proj of projects">
+                <td class="col-id">#{{ proj.id }}</td>
+                <td class="task-title">{{ proj.name }}</td>
+                <td>
+                  <span class="tag-pill">{{ getTeamName(proj.teamId) }}</span>
+                </td>
+                <td>
+                  <span class="status-badge badge-progress">{{ proj.status }}</span>
+                </td>
+                <td class="task-desc">{{ proj.description || '—' }}</td>
+                <td>{{ proj.createdAt | date:'mediumDate' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: TASKS VIEW (CORE WORKFLOW)                        -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'tasks'">
+      <!-- Form Toggle Header -->
+      <div class="tasks-action-header">
+        <div>
+          <h2 class="section-title">Task Deliverables</h2>
+          <p class="section-subtitle">Create, assign, and track project tasks</p>
+        </div>
+        <button class="btn btn-primary btn-large" (click)="toggleTaskForm()">
+          <span *ngIf="!showTaskForm">➕ Create New Task</span>
+          <span *ngIf="showTaskForm">✕ Hide Task Form</span>
+        </button>
+      </div>
+
+      <!-- Create Task Form Card -->
+      <section *ngIf="showTaskForm" class="section-container form-card task-creation-box">
+        <h3 class="form-title">Create New Task Deliverable</h3>
+        <p class="form-subtitle">Form inputs map directly to <code>POST /api/tasks</code></p>
+
+        <!-- Warning if no projects exist -->
+        <div *ngIf="projects.length === 0" class="alert-inline alert-warning">
+          ⚠️ <strong>Prerequisite:</strong> No projects exist in the database yet. 
+          Please <a href="javascript:void(0)" (click)="setActiveTab('projects')">create a Project</a> first before adding tasks!
+        </div>
+
+        <form (ngSubmit)="onCreateTask()" class="app-form" *ngIf="projects.length > 0">
+          <div class="form-row">
+            <!-- Project Selector using actual returned IDs -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskProj">Project *</label>
+              <select 
+                id="taskProj" 
+                class="form-select" 
+                [(ngModel)]="newTask.projectId" 
+                name="taskProj" 
+                required>
+                <option [ngValue]="null" disabled>-- Select Project --</option>
+                <option *ngFor="let proj of projects" [ngValue]="proj.id">
+                  #{{ proj.id }} - {{ proj.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Task Title -->
+            <div class="form-group flex-2">
+              <label class="form-label" for="taskTitle">Task Title *</label>
+              <input 
+                id="taskTitle" 
+                type="text" 
+                class="form-input" 
+                [(ngModel)]="newTask.title" 
+                name="taskTitle" 
+                placeholder="e.g. Implement User Authentication" 
+                required />
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="taskDescription">Task Description & Deliverable Notes</label>
+            <textarea 
+              id="taskDescription" 
+              class="form-textarea" 
+              rows="3" 
+              [(ngModel)]="newTask.description" 
+              name="taskDescription" 
+              placeholder="Detailed description of requirements and acceptance criteria..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <!-- Assigned User (Optional) -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskAssignee">Assign To (Optional)</label>
+              <select 
+                id="taskAssignee" 
+                class="form-select" 
+                [(ngModel)]="newTask.assignedTo" 
+                name="taskAssignee">
+                <option [ngValue]="null">-- Unassigned --</option>
+                <option *ngFor="let user of users" [ngValue]="user.id">
+                  #{{ user.id }} - {{ user.fullName }} ({{ user.role }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Estimated Hours -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskHours">Estimated Hours</label>
+              <input 
+                id="taskHours" 
+                type="number" 
+                step="0.5" 
+                min="0" 
+                class="form-input" 
+                [(ngModel)]="newTask.estimatedHours" 
+                name="taskHours" />
+            </div>
+
+            <!-- Priority -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskPriority">Priority</label>
+              <select id="taskPriority" class="form-select" [(ngModel)]="newTask.priority" name="taskPriority">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="URGENT">URGENT</option>
+              </select>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskStatus">Initial Status</label>
+              <select id="taskStatus" class="form-select" [(ngModel)]="newTask.status" name="taskStatus">
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="UNDER_REVIEW">UNDER_REVIEW</option>
+                <option value="COMPLETED">COMPLETED</option>
+              </select>
+            </div>
+
+            <!-- Deadline -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="taskDeadline">Deadline</label>
+              <input 
+                id="taskDeadline" 
+                type="date" 
+                class="form-input" 
+                [(ngModel)]="newTask.deadline" 
+                name="taskDeadline" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submittingTask">
+              <span *ngIf="submittingTask">Saving to MySQL...</span>
+              <span *ngIf="!submittingTask">💾 Save Task Deliverable</span>
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="toggleTaskForm()">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Tasks Table Section -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">All Tasks</h3>
+            <p class="section-subtitle">Real-time deliverables loaded from <code>/api/tasks</code></p>
+          </div>
+          <button class="btn btn-secondary" (click)="loadTasks()">Refresh Tasks</button>
+        </div>
+
+        <div *ngIf="loadingTasks" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading tasks from backend...</p>
+        </div>
+
+        <div *ngIf="!loadingTasks && tasks.length === 0" class="state-container empty-state">
+          <div class="empty-icon">📂</div>
+          <h3 class="empty-title">No tasks found</h3>
+          <p class="empty-description">
+            Click <strong>"Create New Task"</strong> above to record your first group task deliverable.
+          </p>
+        </div>
+
+        <div *ngIf="!loadingTasks && tasks.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Task Title & Deliverable Notes</th>
+                <th>Project</th>
+                <th>Assigned To</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Est. Hours</th>
+                <th>Deadline</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let task of tasks">
+                <td class="col-id">#{{ task.id }}</td>
+                <td class="col-title">
+                  <div class="task-title">{{ task.title }}</div>
+                  <div *ngIf="task.description" class="task-desc">{{ task.description }}</div>
+                </td>
+                <td>
+                  <span class="tag-pill">{{ getProjectName(task.projectId) }}</span>
+                </td>
+                <td>
+                  <span *ngIf="task.assignedTo" class="user-tag">{{ getUserDisplayName(task.assignedTo) }}</span>
+                  <span *ngIf="!task.assignedTo" class="unassigned-tag">Unassigned</span>
+                </td>
+                <td>
+                  <span class="priority-badge" [ngClass]="getPriorityClass(task.priority)">
+                    {{ task.priority }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(task.status)">
+                    {{ task.status }}
+                  </span>
+                </td>
+                <td class="col-hours">{{ task.estimatedHours }} hrs</td>
+                <td>{{ task.deadline ? (task.deadline | date:'mediumDate') : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 5: SUBMISSIONS VIEW                                  -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'submissions'">
+      <!-- Form Toggle Header -->
+      <div class="tasks-action-header">
+        <div>
+          <h2 class="section-title">Task Evidence & Submissions</h2>
+          <p class="section-subtitle">Record deliverable evidence and perform peer/leader reviews</p>
+        </div>
+        <button class="btn btn-primary btn-large" (click)="toggleSubmissionForm()">
+          <span *ngIf="!showSubmissionForm">➕ Submit Evidence</span>
+          <span *ngIf="showSubmissionForm">✕ Hide Submission Form</span>
+        </button>
+      </div>
+
+      <!-- Create Submission Form Card -->
+      <section *ngIf="showSubmissionForm" class="section-container form-card task-creation-box">
+        <h3 class="form-title">Submit Deliverable Evidence</h3>
+        <p class="form-subtitle">Maps to <code>POST /api/submissions</code>; automatically moves task to <code>UNDER_REVIEW</code></p>
+
+        <!-- Warnings if prerequisite tasks or users are missing -->
+        <div *ngIf="tasks.length === 0" class="alert-inline alert-warning">
+          ⚠️ <strong>Prerequisite:</strong> No tasks exist yet. 
+          Please <a href="javascript:void(0)" (click)="setActiveTab('tasks')">create a Task</a> first before submitting work!
+        </div>
+
+        <div *ngIf="users.length === 0" class="alert-inline alert-warning">
+          ⚠️ <strong>Prerequisite:</strong> No users registered yet. 
+          Please <a href="javascript:void(0)" (click)="setActiveTab('users')">register a Student User</a> first so they can submit work!
+        </div>
+
+        <form (ngSubmit)="onCreateSubmission()" class="app-form" *ngIf="tasks.length > 0 && users.length > 0">
+          <div class="form-row">
+            <!-- Select Task -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="subTask">Select Task Deliverable *</label>
+              <select 
+                id="subTask" 
+                class="form-select" 
+                [(ngModel)]="newSubmission.taskId" 
+                name="subTask" 
+                required>
+                <option [ngValue]="null" disabled>-- Choose Task --</option>
+                <option *ngFor="let task of tasks" [ngValue]="task.id">
+                  #{{ task.id }} - {{ task.title }} ({{ task.status }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Select Submitter User -->
+            <div class="form-group flex-1">
+              <label class="form-label" for="subUser">Submitted By (Student) *</label>
+              <select 
+                id="subUser" 
+                class="form-select" 
+                [(ngModel)]="newSubmission.submittedBy" 
+                name="subUser" 
+                required>
+                <option [ngValue]="null" disabled>-- Choose User --</option>
+                <option *ngFor="let user of users" [ngValue]="user.id">
+                  #{{ user.id }} - {{ user.fullName }} ({{ user.role }})
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="subDesc">Work Description / Deliverable Notes *</label>
+            <textarea 
+              id="subDesc" 
+              class="form-textarea" 
+              rows="3" 
+              [(ngModel)]="newSubmission.description" 
+              name="subDesc" 
+              placeholder="Explain the work completed, components delivered, or test results..." 
+              required></textarea>
+          </div>
+
+          <!-- Evidence Link -->
+          <div class="form-group">
+            <label class="form-label" for="subUrl">Evidence Link (GitHub PR, Drive, Demo URL)</label>
+            <input 
+              id="subUrl" 
+              type="url" 
+              class="form-input" 
+              [(ngModel)]="newSubmission.evidenceUrl" 
+              name="subUrl" 
+              placeholder="https://github.com/org/repo/pull/12 or https://drive.google.com/..." />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="submittingSubmission">
+              <span *ngIf="submittingSubmission">Saving to MySQL...</span>
+              <span *ngIf="!submittingSubmission">📤 Record Submission</span>
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="toggleSubmissionForm()">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Submissions Table Section -->
+      <section class="section-container">
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">All Submissions</h3>
+            <p class="section-subtitle">Loaded dynamically from <code>/api/submissions</code></p>
+          </div>
+          <button class="btn btn-secondary" (click)="loadSubmissions()">Refresh Submissions</button>
+        </div>
+
+        <div *ngIf="loadingSubmissions" class="state-container">
+          <div class="spinner"></div>
+          <p class="state-text">Loading submissions...</p>
+        </div>
+
+        <div *ngIf="!loadingSubmissions && submissions.length === 0" class="state-container empty-state">
+          <div class="empty-icon">📤</div>
+          <h3 class="empty-title">No submissions recorded yet</h3>
+          <p class="empty-description">
+            Click <strong>"Submit Evidence"</strong> above to submit work for a task deliverable.
+          </p>
+        </div>
+
+        <div *ngIf="!loadingSubmissions && submissions.length > 0" class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Task Deliverable</th>
+                <th>Submitter</th>
+                <th>Work Notes & Evidence Link</th>
+                <th>Submission Date</th>
+                <th>Review Status</th>
+                <th>Reviewer Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sub of submissions">
+                <td class="col-id">#{{ sub.id }}</td>
+                <td>
+                  <div class="task-title">{{ getTaskTitle(sub.taskId) }}</div>
+                  <span class="tag-pill">Task #{{ sub.taskId }}</span>
+                </td>
+                <td>
+                  <span class="user-tag">{{ getUserDisplayName(sub.submittedBy) }}</span>
+                </td>
+                <td class="col-title">
+                  <div class="task-desc">{{ sub.description }}</div>
+                  <div *ngIf="sub.evidenceUrl" class="evidence-link-box">
+                    🔗 <a [href]="sub.evidenceUrl" target="_blank" rel="noopener noreferrer" class="link-evidence">
+                      {{ sub.evidenceUrl }}
+                    </a>
+                  </div>
+                </td>
+                <td>{{ sub.submittedAt ? (sub.submittedAt | date:'medium') : '—' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="getSubmissionStatusClass(sub.status)">
+                    {{ sub.status }}
+                  </span>
+                </td>
+                <td>
+                  <div class="actions-cell">
+                    <button 
+                      *ngIf="sub.status !== 'APPROVED'" 
+                      type="button" 
+                      class="btn-action btn-action-approve" 
+                      [disabled]="reviewingSubmissionId === sub.id"
+                      (click)="onReviewSubmission(sub.id!, 'APPROVED')">
+                      ✅ Approve
+                    </button>
+                    <button 
+                      *ngIf="sub.status !== 'CHANGES_REQUESTED'" 
+                      type="button" 
+                      class="btn-action btn-action-reject" 
+                      [disabled]="reviewingSubmissionId === sub.id"
+                      (click)="onReviewSubmission(sub.id!, 'CHANGES_REQUESTED')">
+                      ⚠️ Request Changes
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 6: CONTRIBUTIONS VIEW                                -->
+    <!-- ======================================================== -->
+    <div *ngIf="activeTab === 'contributions'">
+      <!-- Project Filter Bar -->
+      <section class="section-container form-card">
+        <div class="filter-header-row">
+          <div>
+            <h2 class="section-title">Select Project to View Activity</h2>
+            <p class="section-subtitle">Aggregates indicators from <code>GET /api/contributions/project/&#123;id&#125;</code></p>
+          </div>
+
+          <div class="filter-controls">
+            <label class="form-label" for="contribProj">Project:</label>
+            <select 
+              id="contribProj" 
+              class="form-select project-filter-select" 
+              [(ngModel)]="selectedContributionProjectId" 
+              (ngModelChange)="onSelectContributionProject($event)">
+              <option [ngValue]="null">🌐 All Projects (Global Activity)</option>
+              <option *ngFor="let p of projects" [ngValue]="p.id">
+                #{{ p.id }} - {{ p.name }} ({{ getTeamName(p.teamId) }})
+              </option>
+            </select>
+            <button class="btn btn-secondary" (click)="loadContributions(selectedContributionProjectId)">
+              Refresh
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ethical Indicator Disclaimer Banner from Backend -->
+      <div class="disclaimer-card" *ngIf="contributionData?.disclaimer">
+        <span class="disclaimer-icon">💡</span>
+        <p>
+          <strong>Explainable Activity Principle:</strong> {{ contributionData?.disclaimer }}
+        </p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loadingContributions" class="state-container">
+        <div class="spinner"></div>
+        <p class="state-text">Calculating explainable contribution indicators...</p>
+      </div>
+
+      <!-- Empty State if no contributors or 0 projects -->
+      <div *ngIf="!loadingContributions && (!contributionData || contributionData.contributions.length === 0)" class="state-container empty-state">
+        <div class="empty-icon">📈</div>
+        <h3 class="empty-title">No contribution data available</h3>
+        <p class="empty-description">
+          Create projects and assign tasks to students to generate transparent activity metrics.
+        </p>
+      </div>
+
+      <!-- Contributions Table & Breakdown -->
+      <section *ngIf="!loadingContributions && contributionData && contributionData.contributions.length > 0" class="section-container">
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">
+              Member Activity Breakdown 
+              <span *ngIf="selectedContributionProjectId">— {{ getProjectName(selectedContributionProjectId) }}</span>
+            </h3>
+            <p class="section-subtitle">Verifiable deliverables, completed tasks, and submission history</p>
+          </div>
+          <span class="badge-total-contributors">{{ contributionData.contributions.length }} Members Evaluated</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Member / Student</th>
+                <th>Role</th>
+                <th>Tasks (Completed / Assigned)</th>
+                <th>Estimated Hours (Delivered / Total)</th>
+                <th>Evidence Submissions</th>
+                <th>Activity Indicator</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of contributionData.contributions">
+                <td class="col-title">
+                  <div class="task-title">{{ c.fullName }}</div>
+                  <div class="task-desc">{{ c.email }}</div>
+                </td>
+                <td>
+                  <span class="tag-pill">{{ c.role }}</span>
+                </td>
+                <td>
+                  <strong>{{ c.completedTasksCount }}</strong> / {{ c.assignedTasksCount }} completed
+                  <div class="progress-bar-bg" *ngIf="c.assignedTasksCount > 0">
+                    <div class="progress-bar-fill" [style.width.%]="(c.completedTasksCount / c.assignedTasksCount) * 100"></div>
+                  </div>
+                </td>
+                <td>
+                  <strong>{{ c.completedEstimatedHours }}</strong> / {{ c.totalEstimatedHours }} hrs
+                </td>
+                <td>
+                  <span class="status-badge badge-completed">{{ c.approvedSubmissionsCount }} Approved</span>
+                  <span class="sub-count-total">({{ c.submissionsCount }} total)</span>
+                </td>
+                <td>
+                  <span *ngIf="c.assignedTasksCount === 0" class="unassigned-tag">No tasks assigned</span>
+                  <span *ngIf="c.assignedTasksCount > 0 && c.completedTasksCount === c.assignedTasksCount" class="status-badge badge-completed">
+                    ✅ All Tasks Complete
+                  </span>
+                  <span *ngIf="c.assignedTasksCount > 0 && c.completedTasksCount < c.assignedTasksCount" class="status-badge badge-progress">
+                    🔄 In Progress
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </main>
+</div>
